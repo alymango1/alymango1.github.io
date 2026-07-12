@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Impactaris Test Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; color: #fff; font-family: Arial, sans-serif; padding: 24px; }
+  h1 { font-size: 14px; margin-bottom: 4px; }
+  p.sub { font-size: 11px; color: #666; margin-bottom: 24px; }
+  h2 { font-size: 11px; color: #666; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 160px); gap: 6px; }
+  a {
+    display: block; padding: 7px 10px; font-size: 11px; font-family: Arial, sans-serif;
+    text-decoration: none; text-align: center;
+    border: 1px solid; border-radius: 2px;
+  }
+  a:hover { opacity: 0.7; }
+
+  .emp { color: #fff; border-color: #fbff00; background: #000; }
+  .con { color: #bbb; border-color: #ff0000; background: #000; }
+  .cli { color: #888; border-color: #0015ff; background: #000; }
+  .par { color: #555; border-color: #15ff00; background: #000; }
+
+  a.locked { opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+const BASE = "https://www.impactaris.com";
+
+const DASHBOARDS = [
+  { path: "/employees",   label: "Employee",   cls: "emp", hasBadges: true  },
+  { path: "/contractors", label: "Contractor", cls: "con", hasBadges: true  },
+  { path: "/client",      label: "Client",     cls: "cli", hasBadges: false },
+  { path: "/partners",    label: "Partner",    cls: "par", hasBadges: true  },
+];
+
+const BADGES = [
+  ["accountExecutive",  "Account Executive"  ],
+  ["accountManager",    "Account Manager"    ],
+  ["socialMedia",       "Social Media Mgr"   ],
+  ["graphicDesigner",   "Graphic Designer"   ],
+  ["videoEditor",       "Video Editor"       ],
+  ["photoEditor",       "Photo Editor"       ],
+  ["webDeveloper",      "Web Developer"      ],
+  ["seoSpecialist",     "SEO Specialist"     ],
+  ["copywriter",        "Copywriter"         ],
+  ["administration",    "Administration"     ],
+  ["salesResearcher",   "Sales Researcher"   ],
+  ["3dModeler",         "3D Modeler"         ],
+  ["contentCreator",    "Content Creator"    ],
+  ["emailSpecialist",   "Email Specialist"   ],
+  ["customerService",   "Customer Service"   ],
+  ["sem",               "SEM"                ],
+  ["paidAdsSpecialist", "Paid Ads Specialist"],
+  ["textMarketer",      "Text Marketer"      ],
+];
+
+function buildUrl(path, dashboard, trained, badge) {
+  let u = `${BASE}${path}?dashboard=${dashboard}&trained=${trained}`;
+  if (badge) u += `&badge=${badge}`;
+  return u;
+}
+
+function makeLink(href, text, cls, locked) {
+  const a = document.createElement('a');
+  a.href = href;
+  a.textContent = text;
+  a.className = cls + (locked ? ' locked' : '');
+  a.target = '_blank';
+  return a;
+}
+
+const root = document.getElementById('root');
+
+DASHBOARDS.forEach(d => {
+  const h2 = document.createElement('h2');
+  h2.textContent = d.label;
+  root.appendChild(h2);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+
+  grid.appendChild(makeLink(buildUrl(d.path, d.label, 'false', ''), 'Locked', d.cls, true));
+  grid.appendChild(makeLink(buildUrl(d.path, d.label, 'true',  ''), 'Unlocked', d.cls, false));
+
+  if (d.hasBadges) {
+    BADGES.forEach(([value, label]) => {
+      grid.appendChild(makeLink(buildUrl(d.path, d.label, 'true', value), label, d.cls, false));
+    });
+  }
+
+  root.appendChild(grid);
+});
+</script>
+</body>
+</html>
