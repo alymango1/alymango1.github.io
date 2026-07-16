@@ -21,6 +21,7 @@
   .con { color: #bbb; border-color: #ff0000; background: #000; }
   .cli { color: #888; border-color: #0015ff; background: #000; }
   .par { color: #555; border-color: #15ff00; background: #000; }
+  .frm { color: #aaa; border-color: #ff00e6; background: #000; }
 
   a.locked { opacity: 0.8; }
 </style>
@@ -60,6 +61,27 @@ const BADGES = [
   ["textMarketer",      "Text Marketer"      ],
 ];
 
+const FORMS = [
+  "/partner-weekly-report-form",
+  "/suggestion-form",
+  "/incident-report-form",
+  "/payout-request-form",
+  "/support-request-form",
+  "/bug-report-form",
+  "/shift-completion-form",
+  "/general-work-request-form",
+  "/submit-invoice-form",
+];
+
+function formLabel(path) {
+  return path
+    .replace(/^\//, '')
+    .replace(/-form$/, '')
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 function buildUrl(path, dashboard, trained, badge) {
   let u = `${BASE}${path}?dashboard=${dashboard}&trained=${trained}`;
   if (badge) u += `&badge=${badge}`;
@@ -96,6 +118,19 @@ DASHBOARDS.forEach(d => {
 
   root.appendChild(grid);
 });
+
+const formsH2 = document.createElement('h2');
+formsH2.textContent = 'Forms';
+root.appendChild(formsH2);
+
+const formsGrid = document.createElement('div');
+formsGrid.className = 'grid';
+
+FORMS.forEach(path => {
+  formsGrid.appendChild(makeLink(`${BASE}${path}`, formLabel(path), 'frm', false));
+});
+
+root.appendChild(formsGrid);
 </script>
 </body>
 </html>
