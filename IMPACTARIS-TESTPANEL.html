@@ -1,67 +1,4 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
-const assert = require('node:assert/strict');
-
-const auth = fs.readFileSync('C:/Users/ADMIN/.codex/attachments/7084d3db-4c5b-445e-b555-e56b03ff2f3d/Pasted text.txt', 'utf8');
-const roleBlock = auth.match(/const ROLE_BADGES = \[([\s\S]*?)\];/)[1];
-const roles = [...roleBlock.matchAll(/badgeId:\s*"([^"]+)",\s*label:\s*"([^"]+)",\s*state:\s*"([^"]+)"/g)]
-  .map(([, badgeId, label, state]) => ({badgeId, label, state}));
-assert.equal(roles.length, 18);
-const badgeMap = Object.fromEntries(roles.map(({state, badgeId, label}) => [state, {badgeId, label}]));
-const dashboards = [
-  {path:'/dashboard/employee', label:'Employee', cls:'emp', hasBadges:true},
-  {path:'/dashboard/contractor', label:'Contractor', cls:'con', hasBadges:true},
-  {path:'/dashboard/client', label:'Client', cls:'cli', hasBadges:false},
-  {path:'/dashboard/partner', label:'Partner', cls:'par', hasBadges:true}
-];
-const forms = ['/partner-weekly-report-form','/suggestion-form','/incident-report-form','/payout-request-form','/support-request-form','/bug-report-form','/shift-completion-form','/general-work-request-form','/submit-invoice-form'];
-const testerIds = ['28ad5344-e7cd-4d66-911e-55923e9b54ed','ad2abb52-7b07-4dab-84c0-2bab96599cf3'];
-
-const testMode = `import wixLocation from 'wix-location';
-
-// Appearance overrides only. Backend permissions still apply to real data/actions.
-const TESTER_IDS = new Set(${JSON.stringify(testerIds, null, 2)});
-
-const ROLE_BADGE_MAP = ${JSON.stringify(badgeMap, null, 2)};
-
-function getParams() {
-    const query = wixLocation.query;
-    return {
-        trained: query.trained || null,
-        badge: query.badge || '',
-        dashboard: query.dashboard || null,
-    };
-}
-
-export function isTestMode(memberId) {
-    if (!TESTER_IDS.has(memberId)) return false;
-    const {trained, badge, dashboard} = getParams();
-    return !!(trained || badge || dashboard);
-}
-
-export function getTestOverrides(memberId) {
-    if (!TESTER_IDS.has(memberId)) return null;
-    const {trained, badge, dashboard} = getParams();
-    if (!trained && !badge && !dashboard) return null;
-
-    const roleBadge = badge && Object.prototype.hasOwnProperty.call(ROLE_BADGE_MAP, badge)
-        ? [{...ROLE_BADGE_MAP[badge], state: badge}]
-        : [];
-    const isTrained = trained === 'true';
-
-    return {
-        employeeTrainingComplete: isTrained,
-        isPartner: dashboard === 'Partner' && isTrained,
-        isContractor: dashboard === 'Contractor' && isTrained,
-        isClient: dashboard === 'Client' && isTrained,
-        roleBadges: roleBadge,
-        __isTestMode: true,
-    };
-}
-`;
-
-const html = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -91,13 +28,121 @@ const html = `<!DOCTYPE html>
 <div id="root"></div>
 <script>
 const BASE = 'https://www.impactaris.com';
-const DASHBOARDS = ${JSON.stringify(dashboards, null, 2)};
-const BADGES = ${JSON.stringify(roles.map(r => [r.state, r.label]), null, 2)};
+const DASHBOARDS = [
+  {
+    "path": "/dashboard/employee",
+    "label": "Employee",
+    "cls": "emp",
+    "hasBadges": true
+  },
+  {
+    "path": "/dashboard/contractor",
+    "label": "Contractor",
+    "cls": "con",
+    "hasBadges": true
+  },
+  {
+    "path": "/dashboard/client",
+    "label": "Client",
+    "cls": "cli",
+    "hasBadges": false
+  },
+  {
+    "path": "/dashboard/partner",
+    "label": "Partner",
+    "cls": "par",
+    "hasBadges": true
+  }
+];
+const BADGES = [
+  [
+    "accountExecutive",
+    "Account Executive"
+  ],
+  [
+    "accountManager",
+    "Account Manager"
+  ],
+  [
+    "socialMedia",
+    "Social Media Manager"
+  ],
+  [
+    "graphicDesigner",
+    "Graphic Designer"
+  ],
+  [
+    "videoEditor",
+    "Video Editor"
+  ],
+  [
+    "photoEditor",
+    "Photo Editor"
+  ],
+  [
+    "webDeveloper",
+    "Web Developer"
+  ],
+  [
+    "seoSpecialist",
+    "SEO Specialist"
+  ],
+  [
+    "copywriter",
+    "Copywriter"
+  ],
+  [
+    "administration",
+    "Administration"
+  ],
+  [
+    "salesResearcher",
+    "Sales Researcher"
+  ],
+  [
+    "3dModeler",
+    "3D Modeler"
+  ],
+  [
+    "contentCreator",
+    "Content Creator"
+  ],
+  [
+    "emailSpecialist",
+    "Email Specialist"
+  ],
+  [
+    "customerService",
+    "Customer Service"
+  ],
+  [
+    "sem",
+    "SEM"
+  ],
+  [
+    "paidAdsSpecialist",
+    "Paid Ads Specialist"
+  ],
+  [
+    "textMarketer",
+    "Text Marketer"
+  ]
+];
 // Existing form destinations are preserved. Their availability has not been verified.
-const FORMS = ${JSON.stringify(forms, null, 2)};
+const FORMS = [
+  "/partner-weekly-report-form",
+  "/suggestion-form",
+  "/incident-report-form",
+  "/payout-request-form",
+  "/support-request-form",
+  "/bug-report-form",
+  "/shift-completion-form",
+  "/general-work-request-form",
+  "/submit-invoice-form"
+];
 
 function formLabel(path) {
-  return path.replace(/^\\//, '').replace(/-form$/, '').split('-')
+  return path.replace(/^\//, '').replace(/-form$/, '').split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
@@ -152,55 +197,3 @@ root.appendChild(formsGrid);
 </script>
 </body>
 </html>
-`;
-
-// Check generated link destinations and their integration with the override reader.
-const links = [];
-function element(tag) {
-  const el = {tag, children:[], appendChild(child) { this.children.push(child); }};
-  if (tag === 'a') links.push(el);
-  return el;
-}
-const root = element('div');
-const panelContext = {URL, document:{createElement:element, getElementById:() => root}};
-vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], panelContext);
-assert.equal(links.length, 71);
-const wixLocation = {query:{}};
-const preview = {wixLocation};
-vm.createContext(preview);
-vm.runInContext(testMode.replace(/^import .*;\n/, '').replaceAll('export function ', 'function '), preview);
-const fields = {Employee:'employeeTrainingComplete', Partner:'isPartner', Contractor:'isContractor', Client:'isClient'};
-for (const link of links.slice(0, 62)) {
-  const url = new URL(link.href);
-  assert.equal(url.origin, 'https://www.impactaris.com');
-  wixLocation.query = Object.fromEntries(url.searchParams);
-  const expected = dashboards.find(d => d.label === wixLocation.query.dashboard);
-  assert.equal(url.pathname, expected.path);
-  for (const tester of testerIds) {
-    const overrides = preview.getTestOverrides(tester);
-    assert.equal(overrides[fields[expected.label]], wixLocation.query.trained === 'true');
-    assert.equal(overrides.roleBadges.length, wixLocation.query.badge ? 1 : 0);
-    if (wixLocation.query.badge) assert.equal(overrides.roleBadges[0].state, wixLocation.query.badge);
-    assert.equal(preview.isTestMode(tester), true);
-  }
-  assert.equal(preview.getTestOverrides('ordinary-member'), null);
-  assert.equal(preview.isTestMode('ordinary-member'), false);
-}
-wixLocation.query = {};
-assert.equal(preview.getTestOverrides(testerIds[0]), null);
-assert.equal(preview.isTestMode(testerIds[0]), false);
-wixLocation.query = {dashboard:'Partner', trained:'false', badge:'accountExecutive'};
-assert.equal(preview.getTestOverrides(testerIds[0]).isPartner, false);
-wixLocation.query.badge = 'toString';
-assert.equal(preview.getTestOverrides(testerIds[0]).roleBadges.length, 0);
-for (const [index, link] of links.slice(62).entries()) {
-  const url = new URL(link.href);
-  assert.equal(url.pathname, forms[index]);
-  assert.equal(url.search, '');
-}
-
-const out = path.resolve('outputs');
-fs.mkdirSync(out, {recursive:true});
-fs.writeFileSync(path.join(out, 'impactaris-test-panel.html'), html);
-fs.writeFileSync(path.join(out, 'testMode.js'), testMode);
-console.log('PASS: 62 dashboard links, both tester IDs, all locked/unlocked options and specialization previews; ordinary-member and no-query exclusions; 9 preserved form links. Live Wix behavior not tested.');
